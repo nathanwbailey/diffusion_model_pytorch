@@ -13,8 +13,10 @@ def sinusoidal_embedding(x: torch.Tensor, noise_embedding_size: int) -> torch.Te
     )
     angular_speeds = 2.0 * math.pi * frequencies
     embeddings = torch.concat(
-        (torch.sin(angular_speeds * x), torch.cos(angular_speeds * x)), dim=3
+        (torch.sin(angular_speeds * x), torch.cos(angular_speeds * x)), dim=-1
     )
+    embeddings = torch.unsqueeze(embeddings, -1)
+    embeddings = torch.unsqueeze(embeddings, -1)
     return embeddings
 
 class SinusoidalEmbeddingLayer(torch.nn.Module):
@@ -41,11 +43,11 @@ class ResidualBlock(torch.nn.Module):
 
         self.conv_layer_1 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, padding=padding, stride=stride, bias=bias)
 
-        self.conv_layer_2 = torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, padding=padding, stride=stride, bias=bias)
+        self.conv_layer_2 = torch.nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=kernel_size, padding=padding, stride=stride, bias=bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Residual Block Forward Pass."""
-        if self.width == x[1]:
+        if self.width == x.size()[1]:
             residual = x
         else:
             residual = self.downsample_layer(x)
@@ -62,7 +64,7 @@ class DownBlock(torch.nn.Module):
         layer_list = [
             ResidualBlock(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1)
         ] + [
-            ResidualBlock(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1) for _ in range(block_depth-1)
+            ResidualBlock(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1) for _ in range(block_depth-1)
         ]
         self.residual_blocks = torch.nn.ModuleList(layer_list)
         self.average_pool = torch.nn.AvgPool2d(kernel_size=2, stride=2)
@@ -78,21 +80,20 @@ class DownBlock(torch.nn.Module):
 
 class UpBlock(torch.nn.Module):
     """UpBlock Layer."""
-    def __init__(self, block_depth: int, in_channels: int, out_channels: int) -> None:
+    def __init__(self, block_depth: int, in_channels: int, out_channels: int, skip_size: int) -> None:
         """Init Variables and layers."""
         super().__init__()
         layer_list = [
-            ResidualBlock(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1)
+            ResidualBlock(in_channels=in_channels+skip_size, out_channels=out_channels, kernel_size=3, padding=1, stride=1)
         ] + [
-            ResidualBlock(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1) for _ in range(block_depth-1)
+            ResidualBlock(in_channels=out_channels+skip_size, out_channels=out_channels, kernel_size=3, padding=1, stride=1) for _ in range(block_depth-1)
         ]
         self.residual_blocks = torch.nn.ModuleList(layer_list)
         self.up_sampling = torch.nn.Upsample(scale_factor=2, mode='bilinear')
 
-    def forward(self, input_list: list[torch.Tensor | list[torch.Tensor]]) -> torch.Tensor:
+    def forward(self, input_tensor: torch.Tensor, skips: list[torch.Tensor]) -> torch.Tensor:
         """Up Block Forward Pass."""
-        x, skips = input_list
-        x = self.up_sampling(x)
+        x = self.up_sampling(input_tensor)
         for residual in self.residual_blocks:
             x = residual(torch.concatenate((x, skips.pop()), dim=1))
         return x
