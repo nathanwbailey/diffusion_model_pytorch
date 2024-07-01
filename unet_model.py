@@ -1,39 +1,63 @@
-import torch
-from model_building_blocks import ResidualBlock
-from model_building_blocks import UpBlock
-from model_building_blocks import DownBlock
-from model_building_blocks import SinusoidalEmbeddingLayer
 import pytorch_model_summary as pms
+import torch
+
+from model_building_blocks import (DownBlock, ResidualBlock,
+                                   SinusoidalEmbeddingLayer, UpBlock)
+
 
 class UNetModel(torch.nn.Module):
     """UNet Model."""
-    def __init__(self, filter_list: list[int], block_depth: int, image_size: int, noise_embedding_size: int) -> None:
+
+    def __init__(
+        self,
+        filter_list: list[int],
+        block_depth: int,
+        image_size: int,
+        noise_embedding_size: int,
+    ) -> None:
         """Init Blocks, Layers, Variables."""
         super().__init__()
 
         self.noise_variance_layers = torch.nn.Sequential(
-            SinusoidalEmbeddingLayer(noise_embedding_size=noise_embedding_size),
-            torch.nn.Upsample(scale_factor=image_size)
+            SinusoidalEmbeddingLayer(
+                noise_embedding_size=noise_embedding_size
+            ),
+            torch.nn.Upsample(scale_factor=image_size),
         )
 
-        self.initial_layer = torch.nn.Conv2d(in_channels=3, out_channels=noise_embedding_size, kernel_size=1)
+        self.initial_layer = torch.nn.Conv2d(
+            in_channels=3, out_channels=noise_embedding_size, kernel_size=1
+        )
 
         down_blocks = []
-        filter_list = [noise_embedding_size*2] + filter_list
+        filter_list = [noise_embedding_size * 2] + filter_list
         for idx in range(3):
             down_blocks.append(
                 DownBlock(
-                    block_depth=block_depth, 
-                    in_channels=filter_list[idx], out_channels=filter_list[idx+1]
+                    block_depth=block_depth,
+                    in_channels=filter_list[idx],
+                    out_channels=filter_list[idx + 1],
                 )
             )
-        
+
         self.down_blocks = torch.nn.ModuleList(down_blocks)
 
         self.residual_blocks = torch.nn.ModuleList(
             [
-                ResidualBlock(in_channels=filter_list[-2], out_channels=filter_list[-1], kernel_size=3, padding=1, stride=1),
-                ResidualBlock(in_channels=filter_list[-1], out_channels=filter_list[-1], kernel_size=3, padding=1, stride=1),
+                ResidualBlock(
+                    in_channels=filter_list[-2],
+                    out_channels=filter_list[-1],
+                    kernel_size=3,
+                    padding=1,
+                    stride=1,
+                ),
+                ResidualBlock(
+                    in_channels=filter_list[-1],
+                    out_channels=filter_list[-1],
+                    kernel_size=3,
+                    padding=1,
+                    stride=1,
+                ),
             ]
         )
 
@@ -41,15 +65,23 @@ class UNetModel(torch.nn.Module):
         for idx in range(3):
             up_blocks.append(
                 UpBlock(
-                    block_depth=block_depth, 
-                    in_channels=filter_list[::-1][idx], out_channels=filter_list[::-1][idx+1], skip_size=filter_list[:-1][::-1][idx]
+                    block_depth=block_depth,
+                    in_channels=filter_list[::-1][idx],
+                    out_channels=filter_list[::-1][idx + 1],
+                    skip_size=filter_list[:-1][::-1][idx],
                 )
             )
         self.up_blocks = torch.nn.ModuleList(up_blocks)
 
-        self.final_conv_layer = torch.nn.Conv2d(in_channels=filter_list[1], out_channels=filter_list[0], kernel_size=1)
+        self.final_conv_layer = torch.nn.Conv2d(
+            in_channels=filter_list[1],
+            out_channels=filter_list[0],
+            kernel_size=1,
+        )
 
-    def forward(self, noisy_images: torch.Tensor, noise_variances: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, noisy_images: torch.Tensor, noise_variances: torch.Tensor
+    ) -> torch.Tensor:
         """UNet Forward Pass."""
         noise_embedding = self.noise_variance_layers(noise_variances)
         x = self.initial_layer(noisy_images)
