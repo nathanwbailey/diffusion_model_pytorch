@@ -1,10 +1,9 @@
 import math
-
 import torch
 
 
 def sinusoidal_embedding(
-    x: torch.Tensor, noise_embedding_size: int
+    x: torch.Tensor, noise_embedding_size: int, device: torch.device
 ) -> torch.Tensor:
     """Sinusoidal Embedding Function."""
     frequencies = torch.exp(
@@ -14,12 +13,11 @@ def sinusoidal_embedding(
             noise_embedding_size // 2,
         )
     )
-    angular_speeds = 2.0 * math.pi * frequencies
+    angular_speeds = (2.0 * math.pi * frequencies).to(device)
     embeddings = torch.concat(
         (torch.sin(angular_speeds * x), torch.cos(angular_speeds * x)), dim=-1
     )
-    embeddings = torch.unsqueeze(embeddings, -1)
-    embeddings = torch.unsqueeze(embeddings, -1)
+    embeddings = torch.transpose(embeddings, 3, 1)
     return embeddings
 
 
@@ -35,7 +33,7 @@ class SinusoidalEmbeddingLayer(torch.nn.Module):
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         """Forward Pass."""
         return self.sinusoidal_embedding(
-            input_tensor, self.noise_embedding_size
+            input_tensor, self.noise_embedding_size, device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         )
 
 
@@ -86,6 +84,7 @@ class ResidualBlock(torch.nn.Module):
             residual = self.downsample_layer(x)
         x = self.batch_norm_layer(x)
         x = self.conv_layer_1(x)
+        x = torch.nn.functional.silu(x)
         x = self.conv_layer_2(x)
         return residual + x
 

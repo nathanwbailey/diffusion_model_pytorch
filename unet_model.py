@@ -75,9 +75,11 @@ class UNetModel(torch.nn.Module):
 
         self.final_conv_layer = torch.nn.Conv2d(
             in_channels=filter_list[1],
-            out_channels=filter_list[0],
+            out_channels=3,
             kernel_size=1,
         )
+        with torch.no_grad():
+            self.final_conv_layer.weight.fill_(0.0)
 
     def forward(
         self, noisy_images: torch.Tensor, noise_variances: torch.Tensor
@@ -98,6 +100,7 @@ class UNetModel(torch.nn.Module):
         return x
 
 
-# unet_model = UNetModel(filter_list=[32, 64, 96, 128], block_depth=2, image_size=32, noise_embedding_size=32)
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# unet_model = UNetModel(filter_list=[32, 64, 96, 128], block_depth=2, image_size=32, noise_embedding_size=32).to(device)
 # print(unet_model)
-# pms.summary(unet_model, torch.zeros((64, 3, 32, 32)), torch.zeros((64, 1)), show_input=False, print_summary=True, max_depth=5, show_parent_layers=True)
+# pms.summary(unet_model, torch.zeros((64, 3, 32, 32)).to(device), torch.zeros((64, 1, 1, 1)).to(device), show_input=False, print_summary=True, max_depth=5, show_parent_layers=True)
