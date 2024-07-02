@@ -129,7 +129,9 @@ generated_images = (
     )
     .detach()
     .cpu()
-    .numpy()
 )
+
+generated_images = torch.transpose(generated_images, 1, 3)
+generated_images = generated_images.numpy()
 
 display(generated_images, save_to="final_generated_images.png")
