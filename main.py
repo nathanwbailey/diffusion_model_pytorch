@@ -18,7 +18,6 @@ WEIGHT_DECAY = 1e-4
 EPOCHS = 100
 NUM_DIFFUSION_STEPS = 20
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 FIXED_GENERATOR = torch.Generator().manual_seed(42)
 
@@ -65,7 +64,6 @@ print(std)
 # mean = torch.Tensor([0.4353, 0.3773, 0.2871]).to("cpu")
 # std = torch.Tensor([0.2526, 0.1980, 0.2044]).to("cpu")
 
-
 train_transforms = torchvision.transforms.Compose(
     [
         torchvision.transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
@@ -73,7 +71,6 @@ train_transforms = torchvision.transforms.Compose(
         torchvision.transforms.Normalize(mean, std),
     ]
 )
-
 
 train_dataset = ImageFolder(
     "data/flower-dataset/dataset/train", train_transforms
@@ -87,7 +84,6 @@ trainloader = torch.utils.data.DataLoader(
     num_workers=4,
     drop_last=True,
 )
-
 
 diffusion_model = DiffusionModel(
     image_size=IMAGE_SIZE,
@@ -106,7 +102,6 @@ optimizer = torch.optim.AdamW(
     lr=LEARNING_RATE,
     weight_decay=WEIGHT_DECAY,
 )
-
 
 train_diffusion_model(
     model=diffusion_model,
