@@ -40,9 +40,9 @@ trainloader = torch.utils.data.DataLoader(
     drop_last=True,
 )
 
-# images = next(iter(trainloader))[0][:10, ...]
-# images = torch.transpose(images, 1, 3)
-# display(images.numpy(), save_to="original_images.png")
+images = next(iter(trainloader))[0][:10, ...]
+images = torch.transpose(images, 1, 3)
+display(images.numpy(), save_to="original_images.png")
 
 mean = torch.zeros(3).to(device)
 std = torch.zeros(3).to(device)
