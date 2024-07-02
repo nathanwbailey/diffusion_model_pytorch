@@ -3,8 +3,7 @@ import torchvision
 from torchvision.datasets import ImageFolder
 
 from diffusion_model import DiffusionModel
-from display import display
-from image_generator import ImageGenerator
+from generate_images import generate_images
 from train import train_diffusion_model
 
 IMAGE_SIZE = 64
@@ -41,28 +40,29 @@ trainloader = torch.utils.data.DataLoader(
     drop_last=True,
 )
 
-images = next(iter(trainloader))[0][:10, ...]
-images = torch.transpose(images, 1, 3)
-display(images.numpy(), save_to="original_images.png")
+# images = next(iter(trainloader))[0][:10, ...]
+# images = torch.transpose(images, 1, 3)
+# display(images.numpy(), save_to="original_images.png")
 
-# mean = torch.zeros(3).to(device)
-# std = torch.zeros(3).to(device)
+mean = torch.zeros(3).to(device)
+std = torch.zeros(3).to(device)
 
-# for idx, batch in enumerate(trainloader):
-#     image = batch[0].to(device)
-#     image_mean = torch.mean(image, dim=(0, 2, 3))
-#     image_std = torch.std(image, dim=(0, 2, 3))
-#     mean = torch.add(mean, image_mean)
-#     std = torch.add(std, image_std)
+for _ in range(DATASET_REPETITIONS):
+    for idx, batch in enumerate(trainloader):
+        image = batch[0].to(device)
+        image_mean = torch.mean(image, dim=(0, 2, 3))
+        image_std = torch.std(image, dim=(0, 2, 3))
+        mean = torch.add(mean, image_mean)
+        std = torch.add(std, image_std)
 
-# mean = (mean / len(trainloader)).to("cpu")
-# std = (std / len(trainloader)).to("cpu")
+mean = (mean / (len(trainloader) * DATASET_REPETITIONS)).to("cpu")
+std = (std / (len(trainloader) * DATASET_REPETITIONS)).to("cpu")
 
-# print(mean)
-# print(std)
+print(mean)
+print(std)
 
-mean = torch.Tensor([0.4353, 0.3773, 0.2871]).to("cpu")
-std = torch.Tensor([0.2526, 0.1980, 0.2044]).to("cpu")
+# mean = torch.Tensor([0.4353, 0.3773, 0.2871]).to("cpu")
+# std = torch.Tensor([0.2526, 0.1980, 0.2044]).to("cpu")
 
 
 train_transforms = torchvision.transforms.Compose(
@@ -106,11 +106,6 @@ optimizer = torch.optim.AdamW(
     weight_decay=WEIGHT_DECAY,
 )
 
-image_generator = ImageGenerator(
-    num_img=10,
-    num_diffusion_steps=NUM_DIFFUSION_STEPS,
-    diffusion_model=diffusion_model,
-)
 
 train_diffusion_model(
     model=diffusion_model,
@@ -119,19 +114,15 @@ train_diffusion_model(
     loss_function=torch.nn.L1Loss(),
     trainloader=trainloader,
     device=device,
-    image_generator=image_generator,
+    image_generator_function=generate_images,
     dataset_repetitions=DATASET_REPETITIONS,
+    num_images_to_generate=10,
+    num_generate_diffusion_steps=NUM_DIFFUSION_STEPS,
 )
 
-generated_images = (
-    diffusion_model.generate_images(
-        num_images=10, diffusion_steps=NUM_DIFFUSION_STEPS
-    )
-    .detach()
-    .cpu()
+generate_images(
+    model=diffusion_model,
+    num_images=10,
+    num_diffusion_steps=NUM_DIFFUSION_STEPS,
+    filename="final_generated_images.png",
 )
-
-generated_images = torch.transpose(generated_images, 1, 3)
-generated_images = generated_images.numpy()
-
-display(generated_images, save_to="final_generated_images.png")

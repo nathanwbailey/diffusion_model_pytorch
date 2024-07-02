@@ -10,14 +10,16 @@ def display(
     elif images.min() < 0.0:
         images = (images + 1.0) / 2.0
 
-    plt.figure(figsize=size)
+    _, axes = plt.subplots(1, 10, figsize=size)
+    axes = axes.ravel()
+
     for i in range(n):
-        _ = plt.subplot(1, n, i + 1)
-        plt.imshow(images[i].astype(as_type), cmap=cmap)
-        plt.axis("off")
+        axes[i].imshow(images[i].astype(as_type), cmap=cmap)
+        axes[i].axis("off")
 
     if save_to:
         plt.savefig(save_to)
         print(f"\nSaved to {save_to}")
 
     plt.show()
+    plt.close()

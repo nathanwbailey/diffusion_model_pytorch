@@ -47,9 +47,7 @@ class DiffusionModel:
         self.ema_model.eval()
         self.device = device
 
-    def denormalize(
-        self, images: torch.Tensor, num_images: int
-    ) -> torch.Tensor:
+    def denormalize(self, images: torch.Tensor) -> torch.Tensor:
         """Denormalize Images."""
         mean = self.mean.view(1, 3, 1, 1)
         mean = mean.to(self.device)
@@ -86,6 +84,7 @@ class DiffusionModel:
             std=1.0,
             size=(self.batch_size, 3, self.image_size, self.image_size),
         ).to(self.device)
+
         # Generate an image x(t) at a random timestep t
         # Get a random t
         diffusion_times = torch.rand(size=(self.batch_size, 1, 1, 1))
@@ -97,6 +96,15 @@ class DiffusionModel:
         pred_noises, _ = self.denoise(
             noisy_images, noise_rates, signal_rates, training=True
         )
+        # Update EMA network
+        with torch.no_grad():
+            for network_param, ema_network_param in zip(
+                self.model.parameters(), self.ema_model.parameters()
+            ):
+                ema_network_param.data = (
+                    self.ema_value * ema_network_param.data
+                    + (1 - self.ema_value) * network_param.data
+                )
         return noises, pred_noises
 
     def reverse_diffusion(
@@ -144,5 +152,5 @@ class DiffusionModel:
         generated_images = self.reverse_diffusion(
             initial_noise, diffusion_steps
         )
-        generated_images = self.denormalize(generated_images, num_images)
+        generated_images = self.denormalize(generated_images)
         return generated_images
