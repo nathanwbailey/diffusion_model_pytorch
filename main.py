@@ -83,7 +83,7 @@ trainloader = torch.utils.data.DataLoader(
     batch_size=BATCH_SIZE,
     shuffle=True,
     pin_memory=True,
-    generator=fixed_generator,
+    generator=FIXED_GENERATOR,
     num_workers=4,
     drop_last=True,
 )
