@@ -5,6 +5,7 @@ from torchvision.datasets import ImageFolder
 from diffusion_model import DiffusionModel
 from generate_images import generate_images
 from train import train_diffusion_model
+from display import display
 
 IMAGE_SIZE = 64
 BATCH_SIZE = 64
