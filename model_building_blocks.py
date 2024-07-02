@@ -1,4 +1,5 @@
 import math
+
 import torch
 
 
@@ -33,7 +34,11 @@ class SinusoidalEmbeddingLayer(torch.nn.Module):
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         """Forward Pass."""
         return self.sinusoidal_embedding(
-            input_tensor, self.noise_embedding_size, device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            input_tensor,
+            self.noise_embedding_size,
+            device=torch.device(
+                "cuda:0" if torch.cuda.is_available() else "cpu"
+            ),
         )
 
 

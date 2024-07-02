@@ -1,4 +1,4 @@
-import pytorch_model_summary as pms
+# import pytorch_model_summary as pms
 import torch
 
 from model_building_blocks import (DownBlock, ResidualBlock,
@@ -101,6 +101,19 @@ class UNetModel(torch.nn.Module):
 
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# unet_model = UNetModel(filter_list=[32, 64, 96, 128], block_depth=2, image_size=32, noise_embedding_size=32).to(device)
+# unet_model = UNetModel(
+#     filter_list=[32, 64, 96, 128],
+#     block_depth=2,
+#     image_size=32,
+#     noise_embedding_size=32,
+# ).to(device)
 # print(unet_model)
-# pms.summary(unet_model, torch.zeros((64, 3, 32, 32)).to(device), torch.zeros((64, 1, 1, 1)).to(device), show_input=False, print_summary=True, max_depth=5, show_parent_layers=True)
+# pms.summary(
+#     unet_model,
+#     torch.zeros((64, 3, 32, 32)).to(device),
+#     torch.zeros((64, 1, 1, 1)).to(device),
+#     show_input=False,
+#     print_summary=True,
+#     max_depth=5,
+#     show_parent_layers=True,
+# )
