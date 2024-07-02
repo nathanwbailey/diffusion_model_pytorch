@@ -19,7 +19,7 @@ NUM_DIFFUSION_STEPS = 20
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-fixed_generator = torch.Generator().manual_seed(42)
+FIXED_GENERATOR = torch.Generator().manual_seed(42)
 
 transforms = torchvision.transforms.Compose(
     [
@@ -34,7 +34,7 @@ trainloader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=BATCH_SIZE,
     shuffle=True,
-    generator=fixed_generator,
+    generator=FIXED_GENERATOR,
     pin_memory=True,
     num_workers=4,
     drop_last=True,
