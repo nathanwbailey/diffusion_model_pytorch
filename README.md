@@ -7,7 +7,7 @@ The main code is located in the following files:
 * main.py - main entry file for training the network
 * train.py - training code
 * diffusion_model.py - implements the diffusion model
-* diffusion_schedules.py - implements offset cosine diffusions schedule foe training and generating
+* diffusion_schedules.py - implements an offset cosine diffusion schedule for training and generating
 * model_building_blocks.py - residual block, Up Block, Down block and sinusoidal embedding to use in the network
 * unet_model.py - implements the UNet network for use in the diffusion model
 * generate_images.py - Function to generate and plot images whilst training
