@@ -3,9 +3,9 @@ import torchvision
 from torchvision.datasets import ImageFolder
 
 from diffusion_model import DiffusionModel
+from display import display
 from generate_images import generate_images
 from train import train_diffusion_model
-from display import display
 
 IMAGE_SIZE = 64
 BATCH_SIZE = 64
@@ -13,7 +13,7 @@ DATASET_REPETITIONS = 5
 NOISE_EMBEDDING_SIZE = 32
 
 EMA = 0.999
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 WEIGHT_DECAY = 1e-4
 EPOCHS = 100
 NUM_DIFFUSION_STEPS = 20
@@ -93,6 +93,15 @@ diffusion_model = DiffusionModel(
     mean=mean,
     std=std,
     device=device,
+)
+
+torch.onnx.export(
+    diffusion_model.model,
+    (
+        next(iter(trainloader))[0].to(device),
+        torch.zeros((64, 1, 1, 1)).to(device),
+    ),
+    "model.onnx",
 )
 
 optimizer = torch.optim.AdamW(

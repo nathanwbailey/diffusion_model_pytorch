@@ -97,14 +97,14 @@ class DiffusionModel:
             noisy_images, noise_rates, signal_rates, training=True
         )
         # Update EMA network
-        with torch.no_grad():
-            for network_param, ema_network_param in zip(
-                self.model.parameters(), self.ema_model.parameters()
-            ):
-                ema_network_param.data = (
-                    self.ema_value * ema_network_param.data
-                    + (1 - self.ema_value) * network_param.data
-                )
+        ema_state_dict = self.ema_model.state_dict()
+        model_state_dict = self.model.state_dict()
+        for key in model_state_dict:
+            ema_state_dict[key] = ema_state_dict[
+                key
+            ] * self.ema_value + model_state_dict[key] * (1 - self.ema_value)
+        self.ema_model.load_state_dict(ema_state_dict)
+
         return noises, pred_noises
 
     def reverse_diffusion(
